@@ -1,0 +1,96 @@
+#!/bin/bash
+
+##########################################################
+#
+# Command line user-friendly interface to merge mp3 files.
+#
+# Manually using ffmpeg can be a bit tricky, and other
+# solutions might leave unwanted metadata, so I wrote
+# this little script to make my life easier :)
+#
+# Hopefully it could benefit other people out there :)
+#
+# All the user needs to do is select files from a menu.
+#
+# It works best if located somewhere within the system PATH
+# (suggestion: $HOME/.local/bin)
+#
+# Dependencies: fzf and ffmpeg
+#
+# Thanks to Derek Taylor (DT) for the inspiration on
+# using fzf as a menu selector.
+# 
+# Originally written by macflav (Flavio Machado)
+#
+# ##############################################
+
+
+# Prevent unset variable use and catch pipeline failures
+set -uo pipefail
+
+# Check if fzf and ffmpeg are installed
+if ! command -v fzf &> /dev/null; then
+  echo "fzf is not installed. Please install it."
+  exit 1
+fi
+
+if ! command -v ffmpeg &> /dev/null; then
+  echo "ffmpeg is not installed. Please install it."
+  exit 1
+fi
+
+# Find all mp3 files in the current directory
+mp3_files=$(find . -maxdepth 1 -type f -name "*.mp3" | sort -)
+
+# Check if any mp3 files were found
+if [[ -z "$mp3_files" ]]; then
+  echo "No mp3 files found in the current directory."
+  exit 1
+fi
+
+# Check if there are at least 2 files
+if [[ "${mp3_files#*$'\n'}" == "${mp3_files%$'\n'}" ]]; then
+  echo "Expected to find at least 2 (two) mp3 files in the current directory."
+  exit 1
+fi
+
+# Create the menu
+selected_files=$(echo "$mp3_files" | fzf \
+       	--reverse \
+	--scheme=path \
+	--exact \
+	--border \
+	--margin=5% \
+	-m \
+	--header='<TAB> to select, <ENTER> to confirm, <ESC> to quit' \
+       	--prompt="Select MP3 files to be merged (min. 2): ")
+
+# Check if the user selected at least two files
+IFS=$'\n' read -rd '' -a selected_files_array <<< "$selected_files"
+if [[ ${#selected_files_array[@]} -lt 2 ]]; then
+  echo "At least two files should be selected."
+  exit 1
+fi
+
+# Create mp3merge_list.tmp for ffmpeg
+echo "" > mp3merge_list.tmp # clear file if it exists
+for file in "${selected_files_array[@]}"; do
+  bname=$(basename "$file")
+  filename="${bname//\'/\'\\\'\'}"
+  echo "file '$filename'" >> mp3merge_list.tmp
+done
+
+# Merge the selected files using ffmpeg
+output_file="mp3merge_$(date +%Y%m%d_%H%M%S).mp3"
+ffmpeg -f concat -safe 0 -i mp3merge_list.tmp -c copy "$output_file" 2> /dev/null
+
+#clean up mp3merge_list.tmp
+rm mp3merge_list.tmp
+
+# Check if ffmpeg was successful
+if [ $? -eq 0 ]; then
+  echo "Files merged successfully into $output_file"
+else
+  echo "Error merging files."
+  exit 1
+fi
