@@ -83,12 +83,13 @@ done
 # Merge the selected files using ffmpeg
 output_file="mp3merge_$(date +%Y%m%d_%H%M%S).mp3"
 ffmpeg -f concat -safe 0 -i mp3merge_list.tmp -c copy "$output_file" 2> /dev/null
+ffmpeg_exit=$?
 
 #clean up mp3merge_list.tmp
 rm mp3merge_list.tmp
 
 # Check if ffmpeg was successful
-if [ $? -eq 0 ]; then
+if [ $ffmpeg_exit -eq 0 ]; then
   echo "Files merged successfully into $output_file"
 else
   echo "Error merging files."
