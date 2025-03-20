@@ -1,5 +1,7 @@
 Command line user-friendly interface to merge mp3 files.
 
+![image](https://github.com/user-attachments/assets/25db8acb-25f4-4336-b187-d1c6b984ad31)
+
 Manually using ffmpeg can be a bit tricky, and other solutions might inject unwanted metadata on the final product, so I wrote this little script to make my life easier :)
 Hopefully it could benefit other people out there :)
 
