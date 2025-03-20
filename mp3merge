@@ -73,7 +73,7 @@ if [[ ${#selected_files_array[@]} -lt 2 ]]; then
 fi
 
 # Create mp3merge_list.tmp for ffmpeg
-echo "" > mp3merge_list.tmp # clear file if it exists
+echo -n "" > mp3merge_list.tmp # clear file if it exists
 for file in "${selected_files_array[@]}"; do
   bname=$(basename "$file")
   filename="${bname//\'/\'\\\'\'}"
